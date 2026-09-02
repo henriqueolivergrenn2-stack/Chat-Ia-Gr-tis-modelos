@@ -30,9 +30,15 @@ module.exports = async (req, res) => {
     : 'https://api.groq.com/openai/v1/chat/completions';
 
   // O router da HF serve cada modelo através de um ou mais provedores por trás
-  // (fireworks, together, deepinfra, hf-inference...). ":auto" deixa o router
-  // escolher um disponível, sem precisar expor essa escolha em /admin.html.
-  const upstreamModel = isHf && !modelId.includes(':') ? modelId + ':auto' : modelId;
+  // (fireworks, together, deepinfra, hf-inference...). Sem nenhum sufixo, o
+  // próprio router já escolhe automaticamente o provedor mais rápido disponível
+  // — que é exatamente o comportamento que queremos, sem precisar expor essa
+  // escolha em /admin.html. IMPORTANTE: ":auto" NÃO é um sufixo válido pra HF
+  // (só existem ":fastest", ":cheapest", ":preferred" ou o nome de um provedor
+  // específico, ex. ":groq"); mandar ":auto" faz a HF procurar um provedor
+  // chamado "auto", que não existe, e o request falha sempre. Por isso aqui a
+  // gente só repassa o modelId como veio (já sem o prefixo "hf:").
+  const upstreamModel = modelId;
 
   const payload = {
     model: upstreamModel,
