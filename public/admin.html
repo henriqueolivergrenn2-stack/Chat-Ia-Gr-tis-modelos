@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>admin — groq.chat</title>
+<meta name="theme-color" content="#120E1A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23120E1A'/%3E%3Ccircle cx='35' cy='50' r='14' fill='%23FF4F81'/%3E%3Ccircle cx='65' cy='50' r='14' fill='%2335E7C0'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#120E1A; --bg-alt:#171120; --panel:#1D1728; --panel-2:#241C33;
+  --border:#332A47; --border-soft:#2A2338;
+  --text:#EFEAF8; --text-dim:#A79FC0; --text-faint:#6E6488;
+  --accent:#FF4F81; --accent-2:#35E7C0;
+  --accent-soft:rgba(255,79,129,.16); --accent2-soft:rgba(53,231,192,.14);
+  --danger:#FF6B6B; --danger-soft:rgba(255,107,107,.14);
+  --ok:#35E7C0; --ok-soft:rgba(53,231,192,.14);
+  --r-sm:6px; --r-md:10px; --r-lg:18px;
+  --font-display:'Space Grotesk',system-ui,-apple-system,sans-serif;
+  --font-body:'Sora',system-ui,-apple-system,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);
+  font-size:15.5px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  display:flex;align-items:flex-start;justify-content:center;
+  min-height:100dvh;padding:8vh 18px 40px;
+}
+button,input{font-family:inherit;color:inherit;}
+button{cursor:pointer;background:none;border:none;}
+a{color:var(--accent-2);}
+:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px;}
+
+.wrap{width:100%;max-width:440px;}
+.brand{display:flex;align-items:center;gap:8px;margin-bottom:26px;}
+.brand-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-2));flex-shrink:0;}
+.brand-name{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;}
+.brand-name b{color:var(--accent);}
+.brand-name i{color:var(--accent-2);font-style:normal;}
+.brand-name span{color:var(--text-faint);font-weight:500;font-size:14px;margin-left:4px;}
+
+.card{background:var(--bg-alt);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;}
+.card h1{font-family:var(--font-display);font-size:19px;margin:0 0 4px;font-weight:600;}
+.card .sub{color:var(--text-faint);font-size:12.5px;margin:0 0 20px;line-height:1.5;}
+
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12.5px;color:var(--text-dim);margin-bottom:6px;font-family:var(--font-mono);}
+.field input[type=password],.field input[type=text]{
+  width:100%;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:11px 12px;color:var(--text);font-size:14px;
+}
+.field input:focus{outline:none;border-color:var(--accent-2);}
+.key-row{display:flex;gap:6px;}
+.key-row input{flex:1;}
+.icon-toggle{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-sm);padding:0 12px;color:var(--text-dim);font-size:12px;}
+
+.btn{width:100%;padding:12px 16px;border-radius:var(--r-sm);font-size:14px;font-weight:600;border:1px solid var(--border);background:var(--panel);color:var(--text);}
+.btn:hover{border-color:var(--accent-2);}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#1A0A12;}
+.btn.primary:hover{filter:brightness(1.08);}
+.btn.primary:disabled{opacity:.55;filter:none;cursor:default;}
+.btn.ghost{background:none;border:none;color:var(--text-faint);font-size:12.5px;padding:8px;width:auto;}
+.btn.ghost:hover{color:var(--danger);}
+
+.msg{font-size:13px;padding:10px 12px;border-radius:var(--r-sm);margin-bottom:16px;line-height:1.5;}
+.msg.error{background:var(--danger-soft);border:1px solid rgba(255,107,107,.3);color:#FFB3B3;}
+.msg.ok{background:var(--ok-soft);border:1px solid rgba(53,231,192,.3);color:var(--ok);}
+.msg.warn{background:rgba(255,190,90,.12);border:1px solid rgba(255,190,90,.3);color:#FFCB7A;}
+.hidden{display:none !important;}
+
+.status-row{display:flex;align-items:center;gap:8px;margin-bottom:18px;padding:10px 12px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-sm);font-size:12.5px;color:var(--text-dim);}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);flex-shrink:0;}
+.status-dot.ok{background:var(--ok);}
+.status-mono{font-family:var(--font-mono);color:var(--text-faint);}
+
+.top-actions{display:flex;justify-content:space-between;align-items:center;margin-top:18px;}
+.link-back{font-size:12.5px;color:var(--text-faint);text-decoration:none;}
+.link-back:hover{color:var(--text-dim);}
+
+.footnote{font-size:11px;color:var(--text-faint);margin-top:18px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div class="brand-name"><b>groq</b><i>.chat</i><span>admin</span></div>
+  </div>
+
+  <!-- ===== TELA DE LOGIN ===== -->
+  <div class="card" id="login-card">
+    <h1>Entrar</h1>
+    <p class="sub">Área restrita. Só quem tem a senha de admin consegue configurar a chave da Groq usada por todo mundo que acessar o site.</p>
+    <div id="login-msg"></div>
+    <div class="field">
+      <label>Senha de admin</label>
+      <div class="key-row">
+        <input type="password" id="password-input" placeholder="••••••••" autocomplete="current-password">
+        <button class="icon-toggle" id="toggle-pw">mostrar</button>
+      </div>
+    </div>
+    <button class="btn primary" id="login-btn">Entrar</button>
+    <div class="top-actions">
+      <a class="link-back" href="/">← voltar pro chat</a>
+    </div>
+  </div>
+
+  <!-- ===== PAINEL (pós-login) ===== -->
+  <div class="card hidden" id="panel-card">
+    <h1>Chave da Groq</h1>
+    <p class="sub">Essa chave fica guardada no servidor e é usada por qualquer pessoa que acessar o site — ninguém mais precisa colar a própria chave.</p>
+
+    <div class="status-row">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">verificando…</span>
+    </div>
+
+    <div id="panel-msg"></div>
+
+    <div class="field">
+      <label>Chave atual</label>
+      <div class="key-row">
+        <input type="password" id="key-input" placeholder="gsk_...">
+        <button class="icon-toggle" id="toggle-key">mostrar</button>
+      </div>
+      <div class="link-back" style="margin-top:6px;display:block;">Pegue a chave grátis em <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a></div>
+    </div>
+
+    <button class="btn primary" id="save-key-btn">Salvar chave</button>
+
+    <div class="top-actions">
+      <a class="link-back" href="/">← voltar pro chat</a>
+      <button class="btn ghost" id="logout-btn">sair</button>
+    </div>
+
+    <div class="footnote" id="storage-note"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const loginCard = document.getElementById('login-card');
+const panelCard = document.getElementById('panel-card');
+
+function showMsg(elId, type, text){
+  const el = document.getElementById(elId);
+  if(!text){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="msg ${type}">${escapeHtml(text)}</div>`;
+}
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function checkAuth(){
+  try{
+    const res = await fetch('/api/admin/whoami');
+    const data = await res.json();
+    if(data.authenticated){ showPanel(); } else { showLogin(); }
+  }catch(e){ showLogin(); }
+}
+
+function showLogin(){
+  loginCard.classList.remove('hidden');
+  panelCard.classList.add('hidden');
+}
+function showPanel(){
+  loginCard.classList.add('hidden');
+  panelCard.classList.remove('hidden');
+  loadKeyStatus();
+}
+
+document.getElementById('toggle-pw').addEventListener('click', (e)=>{
+  const inp = document.getElementById('password-input');
+  const show = inp.type==='password';
+  inp.type = show ? 'text' : 'password';
+  e.target.textContent = show ? 'ocultar' : 'mostrar';
+});
+document.getElementById('toggle-key').addEventListener('click', (e)=>{
+  const inp = document.getElementById('key-input');
+  const show = inp.type==='password';
+  inp.type = show ? 'text' : 'password';
+  e.target.textContent = show ? 'ocultar' : 'mostrar';
+});
+
+document.getElementById('login-btn').addEventListener('click', login);
+document.getElementById('password-input').addEventListener('keydown', (e)=>{ if(e.key==='Enter') login(); });
+
+async function login(){
+  const password = document.getElementById('password-input').value;
+  if(!password){ showMsg('login-msg','error','Digite a senha.'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  try{
+    const res = await fetch('/api/admin/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+    if(!res.ok){ showMsg('login-msg','error', data.error || 'Falha no login.'); return; }
+    document.getElementById('password-input').value = '';
+    showMsg('login-msg','error','');
+    showPanel();
+  }catch(e){
+    showMsg('login-msg','error','Não consegui falar com o servidor.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+document.getElementById('logout-btn').addEventListener('click', async ()=>{
+  try{ await fetch('/api/admin/logout', { method:'POST' }); }catch(e){}
+  showLogin();
+});
+
+async function loadKeyStatus(){
+  showMsg('panel-msg','error','');
+  try{
+    const res = await fetch('/api/admin/key');
+    if(res.status===401){ showLogin(); return; }
+    const data = await res.json();
+    const dot = document.getElementById('status-dot');
+    const text = document.getElementById('status-text');
+    if(data.hasKey){
+      dot.classList.add('ok');
+      text.textContent = 'Chave configurada — ' + data.masked;
+    }else{
+      dot.classList.remove('ok');
+      text.textContent = 'Nenhuma chave configurada ainda';
+    }
+    document.getElementById('storage-note').textContent = storageNote(data.storageMode);
+  }catch(e){
+    showMsg('panel-msg','error','Não consegui carregar o status da chave.');
+  }
+}
+
+function storageNote(mode){
+  if(mode==='env') return 'A chave está fixa pela variável de ambiente GROQ_API_KEY neste servidor — pra trocar por aqui, remova essa variável do ambiente.';
+  if(mode==='kv') return 'Armazenamento: KV externo (Vercel KV / Upstash) — persiste normalmente entre deploys na Vercel.';
+  if(mode==='tmp-ephemeral') return '⚠ Armazenamento temporário (/tmp) — nesta hospedagem (Vercel sem KV configurado) a chave pode ser perdida em um cold start ou novo deploy. Pra persistir de verdade, configure GROQ_API_KEY nas variáveis de ambiente do projeto ou conecte um Vercel KV/Upstash.';
+  return 'Armazenamento: arquivo local no servidor — persiste normalmente enquanto o processo Node continuar rodando (ideal pro Termux).';
+}
+
+document.getElementById('save-key-btn').addEventListener('click', saveKey);
+document.getElementById('key-input').addEventListener('keydown', (e)=>{ if(e.key==='Enter') saveKey(); });
+
+async function saveKey(){
+  const apiKey = document.getElementById('key-input').value.trim();
+  if(!apiKey){ showMsg('panel-msg','error','Cole a chave da Groq primeiro.'); return; }
+  const btn = document.getElementById('save-key-btn');
+  btn.disabled = true; btn.textContent = 'Validando com a Groq…';
+  showMsg('panel-msg','error','');
+  try{
+    const res = await fetch('/api/admin/key', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ apiKey })
+    });
+    const data = await res.json();
+    if(res.status===401){ showLogin(); return; }
+    if(!res.ok){ showMsg('panel-msg','error', data.error || 'Falha ao salvar.'); return; }
+    document.getElementById('key-input').value = '';
+    showMsg('panel-msg','ok', data.ephemeralWarning
+      ? 'Chave salva e validada — mas atenção: o armazenamento aqui é temporário, veja a nota abaixo.'
+      : 'Chave salva e validada com sucesso. O site já pode ser usado por qualquer visitante.');
+    loadKeyStatus();
+  }catch(e){
+    showMsg('panel-msg','error','Não consegui falar com o servidor.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Salvar chave';
+  }
+}
+
+checkAuth();
+})();
+</script>
+</body>
+</html>

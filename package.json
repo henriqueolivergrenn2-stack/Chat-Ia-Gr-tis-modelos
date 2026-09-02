@@ -1,0 +1,14 @@
+{
+  "name": "groqchat",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Chat multi-modelo usando a API da Groq, com chave gerenciada por um painel de admin — roda na Vercel ou em qualquer Node (Termux incluso).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
