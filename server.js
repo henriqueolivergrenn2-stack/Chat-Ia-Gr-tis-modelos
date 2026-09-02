@@ -10,6 +10,7 @@
  *   ADMIN_PASSWORD   senha do painel /admin.html (obrigatória pra usar o admin)
  *   SESSION_SECRET   segredo pra assinar o cookie de sessão do admin (recomendado)
  *   GROQ_API_KEY     se definida, fixa a chave da Groq (o admin não poderá trocar por aqui)
+ *   HF_TOKEN         se definida, fixa o token da Hugging Face (idem, mas pro painel de HF)
  */
 const http = require('http');
 const fs = require('fs');
@@ -29,6 +30,8 @@ const routes = {
   'POST /api/admin/logout': require('./api/admin/logout'),
   'GET /api/admin/key': require('./api/admin/key'),
   'POST /api/admin/key': require('./api/admin/key'),
+  'GET /api/admin/hfkey': require('./api/admin/hfkey'),
+  'POST /api/admin/hfkey': require('./api/admin/hfkey'),
   'GET /api/admin/whoami': require('./api/admin/whoami')
 };
 

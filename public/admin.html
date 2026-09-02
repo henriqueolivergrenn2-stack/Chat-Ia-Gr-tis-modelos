@@ -134,12 +134,40 @@ a{color:var(--accent-2);}
 
     <button class="btn primary" id="save-key-btn">Salvar chave</button>
 
-    <div class="top-actions">
+    <div class="footnote" id="storage-note"></div>
+  </div>
+
+  <!-- ===== PAINEL — HUGGING FACE (pós-login) ===== -->
+  <div class="card hidden" id="hf-panel-card" style="margin-top:16px;">
+    <h1>Token da Hugging Face</h1>
+    <p class="sub">Opcional. Configurando isso aqui, o chat passa a mostrar também os modelos "HF" (Inference Providers da Hugging Face) além dos da Groq — mesma ideia: um token só, guardado no servidor, ninguém mais precisa colar o próprio.</p>
+
+    <div class="status-row">
+      <span class="status-dot" id="hf-status-dot"></span>
+      <span id="hf-status-text">verificando…</span>
+    </div>
+
+    <div id="hf-panel-msg"></div>
+
+    <div class="field">
+      <label>Token atual</label>
+      <div class="key-row">
+        <input type="password" id="hf-key-input" placeholder="hf_...">
+        <button class="icon-toggle" id="hf-toggle-key">mostrar</button>
+      </div>
+      <div class="link-back" style="margin-top:6px;display:block;">Pegue um token grátis em <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">huggingface.co/settings/tokens</a> (permissão "Make calls to Inference Providers")</div>
+    </div>
+
+    <button class="btn primary" id="hf-save-key-btn">Salvar token</button>
+
+    <div class="footnote" id="hf-storage-note"></div>
+  </div>
+
+  <div class="card hidden" id="bottom-actions-card" style="margin-top:16px;padding:14px 24px;">
+    <div class="top-actions" style="margin-top:0;">
       <a class="link-back" href="/">← voltar pro chat</a>
       <button class="btn ghost" id="logout-btn">sair</button>
     </div>
-
-    <div class="footnote" id="storage-note"></div>
   </div>
 </div>
 
@@ -167,14 +195,22 @@ async function checkAuth(){
   }catch(e){ showLogin(); }
 }
 
+const hfPanelCard = document.getElementById('hf-panel-card');
+const bottomActionsCard = document.getElementById('bottom-actions-card');
+
 function showLogin(){
   loginCard.classList.remove('hidden');
   panelCard.classList.add('hidden');
+  hfPanelCard.classList.add('hidden');
+  bottomActionsCard.classList.add('hidden');
 }
 function showPanel(){
   loginCard.classList.add('hidden');
   panelCard.classList.remove('hidden');
+  hfPanelCard.classList.remove('hidden');
+  bottomActionsCard.classList.remove('hidden');
   loadKeyStatus();
+  loadHfKeyStatus();
 }
 
 document.getElementById('toggle-pw').addEventListener('click', (e)=>{
@@ -185,6 +221,12 @@ document.getElementById('toggle-pw').addEventListener('click', (e)=>{
 });
 document.getElementById('toggle-key').addEventListener('click', (e)=>{
   const inp = document.getElementById('key-input');
+  const show = inp.type==='password';
+  inp.type = show ? 'text' : 'password';
+  e.target.textContent = show ? 'ocultar' : 'mostrar';
+});
+document.getElementById('hf-toggle-key').addEventListener('click', (e)=>{
+  const inp = document.getElementById('hf-key-input');
   const show = inp.type==='password';
   inp.type = show ? 'text' : 'password';
   e.target.textContent = show ? 'ocultar' : 'mostrar';
@@ -241,10 +283,11 @@ async function loadKeyStatus(){
   }
 }
 
-function storageNote(mode){
-  if(mode==='env') return 'A chave está fixa pela variável de ambiente GROQ_API_KEY neste servidor — pra trocar por aqui, remova essa variável do ambiente.';
+function storageNote(mode, envVar){
+  envVar = envVar || 'GROQ_API_KEY';
+  if(mode==='env') return `A chave está fixa pela variável de ambiente ${envVar} neste servidor — pra trocar por aqui, remova essa variável do ambiente.`;
   if(mode==='kv') return 'Armazenamento: KV externo (Vercel KV / Upstash) — persiste normalmente entre deploys na Vercel.';
-  if(mode==='tmp-ephemeral') return '⚠ Armazenamento temporário (/tmp) — nesta hospedagem (Vercel sem KV configurado) a chave pode ser perdida em um cold start ou novo deploy. Pra persistir de verdade, configure GROQ_API_KEY nas variáveis de ambiente do projeto ou conecte um Vercel KV/Upstash.';
+  if(mode==='tmp-ephemeral') return `⚠ Armazenamento temporário (/tmp) — nesta hospedagem (Vercel sem KV configurado) a chave pode ser perdida em um cold start ou novo deploy. Pra persistir de verdade, configure ${envVar} nas variáveis de ambiente do projeto ou conecte um Vercel KV/Upstash.`;
   return 'Armazenamento: arquivo local no servidor — persiste normalmente enquanto o processo Node continuar rodando (ideal pro Termux).';
 }
 
@@ -274,6 +317,58 @@ async function saveKey(){
     showMsg('panel-msg','error','Não consegui falar com o servidor.');
   }finally{
     btn.disabled = false; btn.textContent = 'Salvar chave';
+  }
+}
+
+/* ===== Hugging Face ===== */
+
+async function loadHfKeyStatus(){
+  showMsg('hf-panel-msg','error','');
+  try{
+    const res = await fetch('/api/admin/hfkey');
+    if(res.status===401){ showLogin(); return; }
+    const data = await res.json();
+    const dot = document.getElementById('hf-status-dot');
+    const text = document.getElementById('hf-status-text');
+    if(data.hasKey){
+      dot.classList.add('ok');
+      text.textContent = 'Token configurado — ' + data.masked;
+    }else{
+      dot.classList.remove('ok');
+      text.textContent = 'Nenhum token configurado ainda (opcional)';
+    }
+    document.getElementById('hf-storage-note').textContent = storageNote(data.storageMode, 'HF_TOKEN');
+  }catch(e){
+    showMsg('hf-panel-msg','error','Não consegui carregar o status do token.');
+  }
+}
+
+document.getElementById('hf-save-key-btn').addEventListener('click', saveHfKey);
+document.getElementById('hf-key-input').addEventListener('keydown', (e)=>{ if(e.key==='Enter') saveHfKey(); });
+
+async function saveHfKey(){
+  const apiKey = document.getElementById('hf-key-input').value.trim();
+  if(!apiKey){ showMsg('hf-panel-msg','error','Cole o token da Hugging Face primeiro.'); return; }
+  const btn = document.getElementById('hf-save-key-btn');
+  btn.disabled = true; btn.textContent = 'Validando com a Hugging Face…';
+  showMsg('hf-panel-msg','error','');
+  try{
+    const res = await fetch('/api/admin/hfkey', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ apiKey })
+    });
+    const data = await res.json();
+    if(res.status===401){ showLogin(); return; }
+    if(!res.ok){ showMsg('hf-panel-msg','error', data.error || 'Falha ao salvar.'); return; }
+    document.getElementById('hf-key-input').value = '';
+    showMsg('hf-panel-msg','ok', data.ephemeralWarning
+      ? 'Token salvo e validado — mas atenção: o armazenamento aqui é temporário, veja a nota abaixo.'
+      : 'Token salvo e validado com sucesso. Os modelos "HF" já aparecem no chat pra qualquer visitante.');
+    loadHfKeyStatus();
+  }catch(e){
+    showMsg('hf-panel-msg','error','Não consegui falar com o servidor.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Salvar token';
   }
 }
 

@@ -185,6 +185,18 @@ a{color:var(--accent-2);}
   border:1px solid rgba(53,231,192,.3);
 }
 .model-badge.chat-only{background:var(--panel-2);color:var(--text-dim);border-color:var(--border);}
+.model-provider{
+  flex-shrink:0;
+  font-family:var(--font-mono);
+  font-size:9.5px;
+  letter-spacing:.02em;
+  padding:2.5px 6px;
+  border-radius:20px;
+  background:var(--panel-2);
+  color:var(--text-faint);
+  border:1px solid var(--border);
+}
+.model-provider.hf{color:#FFCB7A;border-color:rgba(255,203,122,.35);background:rgba(255,203,122,.1);}
 #model-search{
   width:100%;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-sm);
   padding:9px 11px;color:var(--text);font-size:14px;margin-bottom:14px;
@@ -455,7 +467,7 @@ a{color:var(--accent-2);}
 <div id="settings-modal" class="modal-backdrop hidden">
   <div class="modal">
     <h2>Configurações</h2>
-    <p class="sub">A chave da Groq é gerenciada pelo administrador do site — você não precisa colar nenhuma chave aqui. Suas conversas e preferências ficam salvas só neste navegador.</p>
+    <p class="sub">As chaves de IA (Groq e Hugging Face) são gerenciadas pelo administrador do site — você não precisa colar nenhuma chave aqui. Suas conversas e preferências ficam salvas só neste navegador.</p>
 
     <div class="field">
       <label>Prompt de sistema (padrão para novas conversas)</label>
@@ -472,7 +484,7 @@ a{color:var(--accent-2);}
       <input type="range" id="maxtok-input" min="256" max="8192" step="256" value="1024">
     </div>
 
-    <div class="vision-note">Modelos marcados <b>chat/imagem</b> conseguem <b>ver e descrever</b> imagens (OCR, análise, explicação). Nenhum modelo da Groq <b>gera ou edita</b> imagens de verdade — para isso você precisaria de outra API. Arquivos de texto/código são lidos e enviados como contexto.</div>
+    <div class="vision-note">Modelos marcados <b>chat/imagem</b> conseguem <b>ver e descrever</b> imagens (OCR, análise, explicação). Nenhum modelo destes provedores (Groq ou Hugging Face) <b>gera ou edita</b> imagens de verdade — para isso você precisaria de outra API. Arquivos de texto/código são lidos e enviados como contexto.</div>
 
     <div class="modal-actions">
       <button class="btn ghost" id="clear-data-btn">apagar todos os dados</button>
@@ -522,8 +534,8 @@ function load(key, fallback){
 function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){ toast('Não deu pra salvar (armazenamento cheio?)'); } }
 
 const FALLBACK_MODELS = [
-  {id:'llama-3.3-70b-versatile', name:'llama-3.3-70b-versatile', capabilities:['chat'], label:'chat'},
-  {id:'llama-3.1-8b-instant', name:'llama-3.1-8b-instant', capabilities:['chat'], label:'chat'}
+  {id:'llama-3.3-70b-versatile', name:'llama-3.3-70b-versatile', capabilities:['chat'], label:'chat', provider:'groq'},
+  {id:'llama-3.1-8b-instant', name:'llama-3.1-8b-instant', capabilities:['chat'], label:'chat', provider:'groq'}
 ];
 
 const state = {
@@ -589,7 +601,7 @@ function renderModelPicker(){
   if(m){
     badge.textContent = m.label;
     badge.classList.toggle('chat-only', m.label==='chat');
-    name.textContent = m.name;
+    name.textContent = (m.provider==='huggingface' ? 'HF · ' : '') + m.name;
   }
   renderModelGrid('');
 }
@@ -607,8 +619,12 @@ function renderModelGrid(filter){
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'model-card' + (m.id===state.model ? ' active' : '');
+    const isHf = m.provider==='huggingface';
     card.innerHTML = `
-      <span class="model-badge${m.label==='chat' ? ' chat-only' : ''}">${m.label}</span>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        <span class="model-badge${m.label==='chat' ? ' chat-only' : ''}">${m.label}</span>
+        <span class="model-provider${isHf ? ' hf' : ''}">${isHf ? 'HF' : 'Groq'}</span>
+      </div>
       <span class="model-card-name">${escapeHtml(m.name)}</span>
       ${m.tools ? '<span class="model-card-tools">🧩 usa ferramentas</span>' : ''}
     `;
@@ -883,7 +899,7 @@ function emptyStateEl(){
     <div class="empty-mark"></div>
     <h1>Manda a braça.</h1>
     <p>Escolhe um modelo ali em cima e começa a conversar. Dá pra anexar imagem, código, PDF, o que precisar — a chave da IA já está configurada pelo servidor.</p>
-    <p id="not-ready-note" class="${state.ready ? 'hidden' : ''}" style="color:var(--danger);font-size:13px;">⚠ O administrador ainda não configurou a chave da Groq neste servidor. Acesse <a href="/admin.html">/admin.html</a> pra configurar.</p>
+    <p id="not-ready-note" class="${state.ready ? 'hidden' : ''}" style="color:var(--danger);font-size:13px;">⚠ O administrador ainda não configurou nenhuma chave (Groq ou Hugging Face) neste servidor. Acesse <a href="/admin.html">/admin.html</a> pra configurar.</p>
     <div class="suggest-grid">
       <button class="suggest-chip" data-p="Me ajuda a debugar um script em Lua que não está funcionando no Roblox">Debugar um script Lua (Roblox)</button>
       <button class="suggest-chip" data-p="Revisa esse trecho de código JavaScript/Node e sugere melhorias">Revisar código JS/Node</button>
